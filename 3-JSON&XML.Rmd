@@ -1,0 +1,125 @@
+---
+title: "JSON & XML"
+output: html_notebook
+---
+
+Let's work with the most common formats that an API will give you back: JSON & XML.
+
+# JSON
+
+JavaScript Object Notation (JSON). Great for hierarchical data. Either objects (`{}`) or arrays (`[]`).
+
+```{r}
+# Get revision history for "Hadley Wickham"
+resp_json <- rev_history("Hadley Wickham")
+
+# Check http_type() of resp_json
+http_type(resp_json)
+
+# Examine returned text with content()
+content(resp_json, as = "text")
+
+# Parse response with content()
+content(resp_json, as = "parsed")
+
+# Parse returned text with fromJSON()
+library(jsonlite)
+fromJSON(content(resp_json, as = "text"))
+```
+
+## Using rlist
+
+```{r}
+# Load rlist
+library(rlist)
+
+# Examine output of this code
+str(content(resp_json), max.level = 4)
+
+# Store revision list
+revs <- content(resp_json)$query$pages$`41916270`$revisions
+
+# Extract the user element
+user_time <- list.select(revs, user, timestamp)
+
+# Print user_time
+user_time
+
+# Stack to turn into a data frame
+list.stack(user_time)
+```
+
+## Using tidyverse
+
+```{r}
+library(dplyr)
+
+# Pull out revision list
+revs <- content(resp_json)$query$pages$`41916270`$revisions
+
+# Extract user and timestamp
+revs %>%
+  bind_rows() %>%           
+  select(user, timestamp)
+```
+
+# XML
+
+```{r}
+# Load xml2
+library(xml2)
+
+# Get XML revision history
+resp_xml <- rev_history("Hadley Wickham", format = "xml")
+
+# Check response is XML 
+http_type(resp_xml)
+
+# Examine returned text with content()
+rev_text <- content(resp_xml, as = "text")
+rev_text
+
+# Turn rev_text into an XML document
+rev_xml <- read_xml(rev_text)
+
+# Examine the structure of rev_xml
+xml_structure(rev_xml)
+```
+
+## XPATHS
+
+XPATHs are designed to specifying nodes in an XML document. Remember /node_name specifies nodes at the current level that have the tag node_name, where as //node_name specifies nodes at any level below the current level that have the tag node_name.
+
+```{r}
+# Find all nodes using XPATH "/api/query/pages/page/revisions/rev"
+xml_find_all(rev_xml, "/api/query/pages/page/revisions/rev")
+
+# Find all rev nodes anywhere in document
+rev_nodes <- xml_find_all(rev_xml, "//rev")
+
+# Use xml_text() to get text from rev_nodes
+xml_text(rev_nodes)
+```
+
+Attributes (next to the tags):
+
+```{r}
+# All rev nodes
+rev_nodes <- xml_find_all(rev_xml, "//rev")
+
+# The first rev node
+first_rev_node <- xml_find_first(rev_xml, "//rev")
+
+# Find all attributes with xml_attrs()
+xml_attrs(first_rev_node)
+
+# Find user attribute with xml_attr()
+xml_attr(first_rev_node, "user")
+
+# Find user attribute for all rev nodes
+xml_attr(rev_nodes, "user")
+```
+
+`xml_attrs()` takes a nodeset and returns all of the attributes for every node in the nodeset. `xml_attr()` takes a nodeset and an additional argument attr to extract a single named argument from each node in the nodeset.
+
+
