@@ -122,4 +122,33 @@ xml_attr(rev_nodes, "user")
 
 `xml_attrs()` takes a nodeset and returns all of the attributes for every node in the nodeset. `xml_attr()` takes a nodeset and an additional argument attr to extract a single named argument from each node in the nodeset.
 
+```{r}
+get_revision_history <- function(article_title){
+  # Get raw revision response
+  rev_resp <- rev_history(article_title, format = "xml")
+  
+  # Turn the content() of rev_resp into XML
+  rev_xml <- read_xml(content(rev_resp, "text"))
+  
+  # Find revision nodes
+  rev_nodes <- xml_find_all(rev_xml, "//rev")
+
+  # Parse out usernames
+  user <- xml_attr(rev_nodes, "user")
+  
+  # Parse out timestamps
+  timestamp <- readr::parse_datetime(xml_attr(rev_nodes, "timestamp"))
+  
+  # Parse out content
+  content <- xml_text(rev_nodes)
+  
+  # Return data frame 
+  data.frame(user = user,
+    timestamp = timestamp,
+    content = substr(content, 1, 40))
+}
+
+# Call function for "Hadley Wickham"
+get_revision_history("Hadley Wickham")
+```
 
