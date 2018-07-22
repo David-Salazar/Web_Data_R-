@@ -1,0 +1,32 @@
+---
+title: "Working with Web Data: Files & API"
+output: html_notebook
+---
+
+# Web Data
+
+Let's start when the data is already in the easiest way to get:
+
+# Direct csv files
+
+```{r}
+# Download the file with download.file()
+download.file(url = csv_url, destfile = "feed_data.csv")
+
+# Read it in with read.csv()
+csv_data <- read.csv("feed_data.csv")
+```
+
+# API files
+
+```{r}
+# Load pageviews
+library(pageviews)
+
+# Get the pageviews for "Hadley Wickham"
+hadley_pageviews <- article_pageviews(project = "en.wikipedia", "Hadley Wickham")
+
+# Examine the resulting object
+str(hadley_pageviews)
+```
+
